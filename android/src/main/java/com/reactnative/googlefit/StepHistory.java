@@ -81,26 +81,6 @@ public class StepHistory {
                 .build()
         );
 
-        // GoogleFit Apps
-        dataSources.add(
-            new DataSource.Builder()
-                .setAppPackageName("com.google.android.gms")
-                .setDataType(DataType.TYPE_STEP_COUNT_DELTA)
-                .setType(DataSource.TYPE_DERIVED)
-                .setStreamName("merge_step_deltas")
-                .build()
-        );
-
-        // Mi Fit
-        dataSources.add(
-            new DataSource.Builder()
-                .setAppPackageName("com.xiaomi.hm.health")
-                .setDataType(DataType.TYPE_STEP_COUNT_DELTA)
-                .setType(DataSource.TYPE_RAW)
-                .setStreamName("")
-                .build()
-        );
-
         /*
         DataSourcesRequest sourceRequest = new DataSourcesRequest.Builder()
                 .setDataTypes(DataType.TYPE_STEP_COUNT_DELTA,
@@ -164,30 +144,35 @@ public class StepHistory {
             }
 
             //if (!DataType.TYPE_STEP_COUNT_DELTA.equals(type)) continue;
-            DataReadRequest readRequest;
+            DataReadRequest readRequest = new DataReadRequest.Builder()
+                    .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                    .bucketByTime(1, TimeUnit.DAYS)
+                    .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                    .build();
 
-            List<DataType> aggregateDataTypeList = DataType.getAggregatesForInput(type);
-            if (aggregateDataTypeList.size() > 0) {
-                DataType aggregateType = aggregateDataTypeList.get(0);
-                Log.i(TAG, "  + Aggregate : " + aggregateType);
-
-                //Check how many steps were walked and recorded in specified days
-                readRequest = new DataReadRequest.Builder()
-                        .aggregate(dataSource
-                            //DataType.TYPE_STEP_COUNT_DELTA
-                            ,
-                            //DataType.AGGREGATE_STEP_COUNT_DELTA
-                            aggregateType)
-                        .bucketByTime(12, TimeUnit.HOURS) // Half-day resolution
-                        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-                        .build();
-            } else {
-                readRequest = new DataReadRequest.Builder()
-                        .read(dataSource)
-                        //.bucketByTime(12, TimeUnit.HOURS) // Half-day resolution
-                        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-                        .build();
-            }
+//            List<DataType> aggregateDataTypeList = DataType.getAggregatesForInput(type);
+//            if (aggregateDataTypeList.size() > 0) {
+//                DataType aggregateType = aggregateDataTypeList.get(0);
+//                Log.i(TAG, "  + Aggregate : " + aggregateType);
+//
+//                //Check how many steps were walked and recorded in specified days
+//                readRequest = new DataReadRequest.Builder()
+//                        .aggregate(dataSource
+//                            //DataType.TYPE_STEP_COUNT_DELTA
+//                            ,
+//                            //DataType.AGGREGATE_STEP_COUNT_DELTA
+//                            aggregateType)
+////                        .bucketByTime(12, TimeUnit.HOURS) // Half-day resolution
+//                        .bucketByTime(1, TimeUnit.DAYS)
+//                        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+//                        .build();
+//            } else {
+//                readRequest = new DataReadRequest.Builder()
+//                        .read(dataSource)
+//                        //.bucketByTime(12, TimeUnit.HOURS) // Half-day resolution
+//                        .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+//                        .build();
+//            }
 
             PendingResult<DataReadResult> readPendingResult = Fitness.HistoryApi.readData(googleFitManager.getGoogleApiClient(), readRequest);
             readPendingResult.setResultCallback(new ResultCallback<DataReadResult>() {
@@ -206,16 +191,10 @@ public class StepHistory {
                         }
                     }
 
-                    //Used for non-aggregated data
-                    if (dataReadResult.getDataSets().size() > 0) {
-                        Log.i(TAG, "  +++ Number of returned DataSets: " + dataReadResult.getDataSets().size());
-                        for (DataSet dataSet : dataReadResult.getDataSets()) {
-                            processDataSet(dataSet, steps);
-                        }
-                    }
-
                     WritableMap map = Arguments.createMap();
                     map.putMap("source", source);
+                    Log.i(TAG, "Range End: " + steps.toString());
+
                     map.putArray("steps", steps);
                     results.pushMap(map);
 
