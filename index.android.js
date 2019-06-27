@@ -102,8 +102,8 @@ class RNGoogleFit {
           callback(false, res.map(function (dev) {
             const obj = {}
             obj.source = dev.source.appPackage + ((dev.source.stream) ? ':' + dev.source.stream : '')
-            obj.steps = buildDailySteps(dev.steps)
-            return obj
+            // obj.steps = buildDailySteps(dev.steps)
+            return dev.steps;
           }, this))
         } else {
           callback('There is no any steps data for this period', false)
