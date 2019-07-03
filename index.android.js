@@ -45,15 +45,16 @@ class RNGoogleFit {
   }
 
   checkIsAuthorized = async () => {
-    const {isAuthorized} = await googleFit.isAuthorized()
-    this.isAuthorized = isAuthorized
-  }
+    const {isAuthorized} = await googleFit.isAuthorized();
+    this.isAuthorized = isAuthorized;
+    return isAuthorized;
+  };
 
   disconnect = () => {
-    this.isAuthorized = false
-    googleFit.disconnect()
-    this.removeListeners()
-  }
+    this.isAuthorized = false;
+    googleFit.disconnect();
+    this.removeListeners();
+  };
 
   removeListeners = () => {
     this.eventListeners.forEach((eventListener) => eventListener.remove())
@@ -315,15 +316,17 @@ class RNGoogleFit {
       })
   }
 
-  isAvailable(callback) { // true if GoogleFit installed
-    googleFit.isAvailable(
-      (msg) => {
-        callback(msg, false)
-      },
-      (res) => {
-        callback(false, res)
-      })
-  }
+    isAvailable(callback) { // true if GoogleFit installed
+        googleFit.isAvailable(
+            (msg) => {
+                console.log('isAvailable error ' + JSON.stringify(msg) )
+                callback(msg, false)
+            },
+            (res) => {
+                console.log('isAvailable response ' + JSON.stringify(res) )
+                callback(false, res)
+            })
+    }
 
   isEnabled(callback) { // true if permission granted
     googleFit.isEnabled(
